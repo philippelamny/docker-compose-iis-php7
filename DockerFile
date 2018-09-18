@@ -39,7 +39,5 @@ RUN setx /m PATH %PATH%;c:\php_7.2
 	
 EXPOSE 80
 
-
-
 ENTRYPOINT ["C:\\ServiceMonitor.exe", "w3svc"]
 

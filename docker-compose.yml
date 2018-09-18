@@ -8,7 +8,7 @@ services:
     volumes:
       - type: bind
         source: ./www/
-        target: c:\viaevista
+        target: c:\www
         bind:
           propagation: cached
     build:
