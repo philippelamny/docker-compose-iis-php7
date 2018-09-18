@@ -1,0 +1,27 @@
+############## Installation Php 7.2
+
+RUN powershell -Command `	
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
+	Invoke-WebRequest -Uri  https://windows.php.net/downloads/releases/php-7.2.9-nts-Win32-VC15-x64.zip  -OutFile php.zip
+	
+RUN powershell -Command `
+	Add-Type -AssemblyName System.IO.Compression.FileSystem ; `
+	[System.IO.Compression.ZipFile]::ExtractToDirectory("C:\php.zip", "C:\php_7.2")
+	
+RUN powershell -Command `
+	cp C:\php_7.2\php.ini-development C:\php_7.2\php.ini
+	
+RUN powershell -Command `
+	$oldpath = (Get-ItemProperty -Path "Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment" -Name PATH).path ; `
+	$newpath = "$oldpath;c:\php_7.2" ; `
+	Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $newPath 
+
+	
+	
+#### COMMANDE A CONNAITRE
+#Import-module iisadministration
+#DISM.EXE /enable-feature /online /featureName:IIS-CGI /all
+#Reset-IISServerManager -Confirm:$false
+#Start-Service was
+#Start-Service w3svc
+#get-iissite | Start-IISSite
