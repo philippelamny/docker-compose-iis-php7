@@ -30,12 +30,28 @@ RUN powershell -Command `
 # Set env path for php 
 RUN setx /m PATH %PATH%;c:\php_7.2
 
-#RUN powershell -Command `
-#	Import-module iisadministration
-	
-#RUN powershell -Command `	
-#	DISM.EXE /enable-feature /online /featureName:IIS-CGI /all
-	
+
+RUN powershell -Command " `
+	Import-module iisadministration ; `
+	DISM.EXE /enable-feature /online /featureName:IIS-CGI /all "
+		
+#COPY applicationhost.config c:\\windows\\system32\\inetsrv\\config\\applicationhost.config
+
+RUN powershell -Command " `
+	Get-IISConfigSection -SectionPath system.webServer/defaultDocument | Get-IISConfigCollection -CollectionName files | New-IISConfigCollectionElement -ConfigAttribute @{'Value' = 'index.php'} ; `	
+	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php_7.2\PHP-CGI.EXE';'maxInstances'=0;'instanceMaxRequests'=10000}  ; `
+	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | Get-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php_7.2\PHP-CGI.EXE'} | Get-IISConfigElement -ChildElementName environmentVariables | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHP_FCGI_MAX_REQUESTS';'value'='10000'}  ; `
+	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | Get-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php_7.2\PHP-CGI.EXE'} | Get-IISConfigElement -ChildElementName environmentVariables | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHPRC';'value'='C:\php_7.2'}  ; `
+	Get-IISConfigSection system.webServer/handlers | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHP-iisfcgi';'path'='*.php';'verb'='GET,HEAD,POST';'modules'='FastCgiModule';'scriptProcessor'='C:\php_7.2\PHP-CGI.EXE';'resourceType'='Either';'requireAccess'='Script'} -AddAt 0 "
+
+RUN powershell -Command " `
+	Reset-IISServerManager -Confirm:$false "
+
+RUN powershell -Command " `
+	Start-Service was ; `
+	Start-Service w3svc ; `
+	Start-Service was ; `
+	get-iissite | Start-IISSite "
 	
 EXPOSE 80
 
