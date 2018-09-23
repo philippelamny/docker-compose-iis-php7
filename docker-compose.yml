@@ -7,7 +7,7 @@ services:
       - "4000:80"
     volumes:
       - type: bind
-        source: ./www/
+        source: ./www
         target: c:\www
         bind:
           propagation: cached

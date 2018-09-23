@@ -1,0 +1,9 @@
+
+=> Access to powershell
+
+> docker-compose exec base_iis powershell
+
+==> excute composer
+
+> docker-compose exec base_iis php composer.phar
+
