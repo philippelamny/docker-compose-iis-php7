@@ -4,7 +4,9 @@ FROM microsoft/windowsservercore:10.0.14393.2430_fr-fr
 # Copy dll for the display of standard out
 COPY vcruntime140.dll C:\\Windows\\System32\\vcruntime140.dll
 
-# download servicemonitor  ???
+# Set env path for php 
+RUN setx /m PATH %PATH%;c:\php
+
 RUN powershell -Command `
     Add-WindowsFeature Web-Server; `
     Invoke-WebRequest -UseBasicParsing -Uri "https://dotnetbinaries.blob.core.windows.net/servicemonitor/2.0.1.3/ServiceMonitor.exe" -OutFile "C:\ServiceMonitor.exe"
@@ -21,9 +23,6 @@ RUN mkdir C:\php
 RUN powershell -Command `
 	Add-Type -AssemblyName System.IO.Compression.FileSystem ; `
 	[System.IO.Compression.ZipFile]::ExtractToDirectory('C:\php.zip', 'C:\php')
-	
-# Set env path for php 
-RUN setx /m PATH %PATH%;c:\php
 	
 RUN powershell -Command " `
 	Import-module iisadministration ; `
