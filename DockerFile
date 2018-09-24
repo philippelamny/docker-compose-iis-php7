@@ -15,8 +15,7 @@ RUN powershell -Command `
 	Invoke-WebRequest -Uri  https://windows.php.net/downloads/releases/php-7.2.10-nts-Win32-VC15-x64.zip  -OutFile php.zip
 	
 # create Php directory
-RUN powershell -Command `
-	mkdir C:\php
+RUN mkdir C:\php
 	
 # Extract downloaded php
 RUN powershell -Command `
@@ -25,8 +24,6 @@ RUN powershell -Command `
 	
 # Set env path for php 
 RUN setx /m PATH %PATH%;c:\php
-
-RUN mkdir c:\www
 	
 RUN powershell -Command " `
 	Import-module iisadministration ; `
@@ -35,31 +32,12 @@ RUN powershell -Command " `
 # Php Ini
 #RUN powershell -Command "cp C:\php\php.ini-development C:\php\php.ini"
 COPY php.ini C:\php\php.ini	
-	
-#COPY applicationhost.config c:\\windows\\system32\\inetsrv\\config\\applicationhost.config
 
-RUN powershell -Command " `
-	Get-IISConfigSection -SectionPath system.webServer/defaultDocument | Get-IISConfigCollection -CollectionName files | New-IISConfigCollectionElement -ConfigAttribute @{'Value' = 'index.php'} ; `	
-	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php\PHP-CGI.EXE';'maxInstances'=0;'instanceMaxRequests'=10000}  ; `
-	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | Get-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php\PHP-CGI.EXE'} | Get-IISConfigElement -ChildElementName environmentVariables | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHP_FCGI_MAX_REQUESTS';'value'='10000'}  ; `
-	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | Get-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php\PHP-CGI.EXE'} | Get-IISConfigElement -ChildElementName environmentVariables | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHPRC';'value'='C:\php'}  ; `
-	Get-IISConfigSection system.webServer/handlers | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHP-iisfcgi';'path'='*.php';'verb'='GET,HEAD,POST';'modules'='FastCgiModule';'scriptProcessor'='C:\php\PHP-CGI.EXE';'resourceType'='Either';'requireAccess'='Script'} -AddAt 0 "
+RUN php -r "unlink('C:\php.zip');"
 
-RUN powershell -Command " `
-	Reset-IISServerManager -Confirm:$false "
-
-RUN powershell -Command " `
-	Start-Service was ; `
-	Start-Service w3svc ; `
-	Start-Service was ; `
-	get-iissite | Start-IISSite "
-	
-#RUN Icacls C:\www /T /grant BUILTIN\Utilisateurs:f
-#RUN	Icacls C:\www /T /grant BUILTIN\IIS_IUSRS:f
-	
 # Install Composer
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-RUN php -r "if (hash_file('SHA384', 'composer-setup.php') === '544e09ee996cdf60ece3804abc52599c22b1f40f4323403c44d44fdfdd586475ca9813a858088ffbc1f233e9b180f061') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+RUN php -r "if (hash_file('SHA384', 'composer-setup.php') === '93b54496392c062774670ac18b134c3b3a95e5a5e5c8f1a9f115f203b75bf9a129d5daa8ba6a13e2cc8a1da0806388a8') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
 RUN php composer-setup.php
 RUN php -r "unlink('composer-setup.php');"
 	
@@ -67,7 +45,28 @@ RUN php -r "unlink('composer-setup.php');"
 RUN powershell -Command iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
 RUN scoop install nodejs
 
+RUN powershell -Command "Reset-IISServerManager -Confirm:$false"
 
+RUN powershell -Command "rm C:\inetpub\wwwroot\* "
+	
+#COPY applicationhost.config c:\\windows\\system32\\inetsrv\\config\\applicationhost.config
+RUN powershell -Command " `
+	Get-IISConfigSection -SectionPath system.webServer/defaultDocument | Get-IISConfigCollection -CollectionName files | New-IISConfigCollectionElement -ConfigAttribute @{'Value' = 'index.php'} ; `	
+	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php\PHP-CGI.EXE';'maxInstances'=0;'instanceMaxRequests'=10000}  ; `
+	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | Get-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php\PHP-CGI.EXE'} | Get-IISConfigElement -ChildElementName environmentVariables | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHP_FCGI_MAX_REQUESTS';'value'='10000'}  ; `
+	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | Get-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php\PHP-CGI.EXE'} | Get-IISConfigElement -ChildElementName environmentVariables | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHPRC';'value'='C:\php'}  ; `
+	Get-IISConfigSection system.webServer/handlers | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHP-iisfcgi';'path'='*.php';'verb'='GET,HEAD,POST';'modules'='FastCgiModule';'scriptProcessor'='C:\php\PHP-CGI.EXE';'resourceType'='Either';'requireAccess'='Script'} -AddAt 0 "
+
+RUN powershell -Command "Reset-IISServerManager -Confirm:$false"
+
+RUN powershell -Command " `
+	Start-Service was ; `
+	Start-Service w3svc ; `
+	Start-Service was ; `
+	get-iissite | Start-IISSite "
+
+
+	
 EXPOSE 80
 
 ENTRYPOINT ["C:\\ServiceMonitor.exe", "w3svc"]
