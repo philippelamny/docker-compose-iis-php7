@@ -44,19 +44,17 @@ RUN php -r "unlink('composer-setup.php');"
 RUN powershell -Command iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
 RUN scoop install nodejs
 
-RUN powershell -Command "Reset-IISServerManager -Confirm:$false"
-
 RUN powershell -Command "rm C:\inetpub\wwwroot\* "
+
+RUN powershell -Command "Reset-IISServerManager -Confirm:$false"
 	
 #COPY applicationhost.config c:\\windows\\system32\\inetsrv\\config\\applicationhost.config
 RUN powershell -Command " `
-	Get-IISConfigSection -SectionPath system.webServer/defaultDocument | Get-IISConfigCollection -CollectionName files | New-IISConfigCollectionElement -ConfigAttribute @{'Value' = 'index.php'} ; `	
+	Get-IISConfigSection system.webServer/defaultDocument | Get-IISConfigElement -ChildElementName files | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'Value'='index.php'} ; `
 	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php\PHP-CGI.EXE';'maxInstances'=0;'instanceMaxRequests'=10000}  ; `
 	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | Get-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php\PHP-CGI.EXE'} | Get-IISConfigElement -ChildElementName environmentVariables | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHP_FCGI_MAX_REQUESTS';'value'='10000'}  ; `
 	Get-IISConfigSection system.webServer/fastCgi | Get-IISConfigCollection | Get-IISConfigCollectionElement -ConfigAttribute @{'fullPath'='C:\php\PHP-CGI.EXE'} | Get-IISConfigElement -ChildElementName environmentVariables | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHPRC';'value'='C:\php'}  ; `
 	Get-IISConfigSection system.webServer/handlers | Get-IISConfigCollection | New-IISConfigCollectionElement -ConfigAttribute @{'name'='PHP-iisfcgi';'path'='*.php';'verb'='GET,HEAD,POST';'modules'='FastCgiModule';'scriptProcessor'='C:\php\PHP-CGI.EXE';'resourceType'='Either';'requireAccess'='Script'} -AddAt 0 "
-
-RUN powershell -Command "Reset-IISServerManager -Confirm:$false"
 
 RUN powershell -Command " `
 	Start-Service was ; `
