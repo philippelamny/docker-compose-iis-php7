@@ -14,7 +14,7 @@ RUN powershell -Command `
 # Download php 
 RUN powershell -Command `	
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
-	Invoke-WebRequest -Uri  https://windows.php.net/downloads/releases/php-7.2.10-nts-Win32-VC15-x64.zip  -OutFile php.zip
+	Invoke-WebRequest -Uri  https://windows.php.net/downloads/releases/archives/php-7.2.9-nts-Win32-VC15-x64.zip -OutFile php.zip
 	
 # create Php directory
 RUN mkdir C:\php
