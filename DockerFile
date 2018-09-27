@@ -59,7 +59,6 @@ RUN powershell -Command " `
 RUN powershell -Command " `
 	Start-Service was ; `
 	Start-Service w3svc ; `
-	Start-Service was ; `
 	get-iissite | Start-IISSite "
 
 
